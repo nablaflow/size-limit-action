@@ -14,9 +14,12 @@ inputs:
   clean_script:
     required: false
     description: 'a npm script to clean up build directory'
-  skip_step:
+  skip_build:
     required: false
-    description: 'which step to skip, either "install" or "build"'
+    description: ''
+  skip_install:
+    required: false
+    description: ''
   directory:
     required: false
     description: "a custom subdirectory"
