@@ -22695,48 +22695,6 @@ module.exports.MaxBufferError = MaxBufferError;
 
 /***/ }),
 
-/***/ 3974:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-const fs_1 = __nccwpck_require__(7147);
-const path_1 = __nccwpck_require__(1017);
-const pnpmLockFiles = ['shrinkwrap.yaml', 'pnpm-lock.yaml'];
-/**
- * Check if a project is using pnpm.
- *
- * @param {string} [cwd=process.cwd()] Current working directory
- * @returns {boolean}
- */
-function hasPNPM(cwd = process.cwd()) {
-    return pnpmLockFiles.some(lockFile => {
-        const lockFilePath = path_1.resolve(cwd, lockFile);
-        return fs_1.existsSync(lockFilePath);
-    });
-}
-module.exports = hasPNPM;
-
-
-/***/ }),
-
-/***/ 3707:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-const path = __nccwpck_require__(1017);
-const fs = __nccwpck_require__(7147);
-
-const hasYarn = (cwd = process.cwd()) => fs.existsSync(path.resolve(cwd, 'yarn.lock'));
-
-module.exports = hasYarn;
-// TODO: Remove this for the next major release
-module.exports["default"] = hasYarn;
-
-
-/***/ }),
-
 /***/ 3287:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -31604,33 +31562,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const exec_1 = __nccwpck_require__(1514);
-const has_yarn_1 = __importDefault(__nccwpck_require__(3707));
-const has_pnpm_1 = __importDefault(__nccwpck_require__(3974));
-const node_process_1 = __importDefault(__nccwpck_require__(7742));
-const node_path_1 = __importDefault(__nccwpck_require__(9411));
-const node_fs_1 = __importDefault(__nccwpck_require__(7561));
-function hasBun(cwd = node_process_1.default.cwd()) {
-    return node_fs_1.default.existsSync(node_path_1.default.resolve(cwd, 'bun.lockb'));
-}
 class Term {
-    /**
-     * Autodetects and gets the current package manager for the current directory, either yarn, pnpm, bun,
-     * or npm. Default is `npm`.
-     *
-     * @param directory The current directory
-     * @returns The detected package manager in use, one of `yarn`, `pnpm`, `npm`, `bun`
-     */
-    getPackageManager(directory) {
-        return (0, has_yarn_1.default)(directory) ? "yarn" : (0, has_pnpm_1.default)(directory) ? "pnpm" : hasBun(directory) ? "bun" : "npm";
-    }
-    execSizeLimit(skipInstall, skipBuild, branch, buildScript, cleanScript, windowsVerbatimArguments, directory, script, packageManager) {
+    execSizeLimit(branch, buildScript, script, directory) {
         return __awaiter(this, void 0, void 0, function* () {
-            const manager = packageManager || this.getPackageManager(directory);
             let output = "";
             if (branch) {
                 try {
@@ -31641,19 +31577,10 @@ class Term {
                 }
                 yield (0, exec_1.exec)(`git checkout -f ${branch}`);
             }
-            if (!skipInstall) {
-                yield (0, exec_1.exec)(`${manager} install`, [], {
-                    cwd: directory
-                });
-            }
-            if (!skipBuild) {
-                const script = buildScript || "build";
-                yield (0, exec_1.exec)(`${manager} run ${script}`, [], {
-                    cwd: directory
-                });
+            if (buildScript) {
+                yield (0, exec_1.exec)(buildScript);
             }
             const status = yield (0, exec_1.exec)(script, [], {
-                windowsVerbatimArguments,
                 ignoreReturnCode: true,
                 listeners: {
                     stdout: (data) => {
@@ -31662,11 +31589,6 @@ class Term {
                 },
                 cwd: directory
             });
-            if (cleanScript) {
-                yield (0, exec_1.exec)(`${manager} run ${cleanScript}`, [], {
-                    cwd: directory
-                });
-            }
             return {
                 status,
                 output
@@ -31723,19 +31645,14 @@ function run() {
                 throw new Error("No PR found. Only pull_request workflows are supported.");
             }
             const token = (0, core_1.getInput)("github_token");
-            const skipInstall = (0, core_1.getInput)("skip_install") === "true" ? true : false;
-            const skipBuild = (0, core_1.getInput)("skip_build") === "true" ? true : false;
             const buildScript = (0, core_1.getInput)("build_script");
-            const cleanScript = (0, core_1.getInput)("clean_script");
             const script = (0, core_1.getInput)("script");
-            const packageManager = (0, core_1.getInput)("package_manager");
             const directory = (0, core_1.getInput)("directory") || process.cwd();
-            const windowsVerbatimArguments = (0, core_1.getInput)("windows_verbatim_arguments") === "true" ? true : false;
             const octokit = new github_1.GitHub(token);
             const term = new Term_1.default();
             const limit = new SizeLimit_1.default();
-            const { status, output } = yield term.execSizeLimit(skipInstall, skipBuild, null, buildScript, cleanScript, windowsVerbatimArguments, directory, script, packageManager);
-            const { output: baseOutput } = yield term.execSizeLimit(skipInstall, skipBuild, pr.base.ref, buildScript, cleanScript, windowsVerbatimArguments, directory, script, packageManager);
+            const { status, output } = yield term.execSizeLimit(null, buildScript, script, directory);
+            const { output: baseOutput } = yield term.execSizeLimit(pr.base.ref, buildScript, script, directory);
             let base;
             let current;
             try {
@@ -31854,30 +31771,6 @@ module.exports = require("https");
 
 "use strict";
 module.exports = require("net");
-
-/***/ }),
-
-/***/ 7561:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:fs");
-
-/***/ }),
-
-/***/ 9411:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:path");
-
-/***/ }),
-
-/***/ 7742:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("node:process");
 
 /***/ }),
 

@@ -1,39 +1,16 @@
 import { exec } from "@actions/exec";
-import hasYarn from "has-yarn";
-import hasPNPM from "has-pnpm";
 
 import process from 'node:process';
 import path from 'node:path';
 import fs from 'node:fs';
 
-function hasBun(cwd = process.cwd()) {
-	return fs.existsSync(path.resolve(cwd, 'bun.lockb'));
-}
-
 class Term {
-  /**
-   * Autodetects and gets the current package manager for the current directory, either yarn, pnpm, bun,
-   * or npm. Default is `npm`.
-   *
-   * @param directory The current directory
-   * @returns The detected package manager in use, one of `yarn`, `pnpm`, `npm`, `bun`
-   */
-  getPackageManager(directory?: string): string {
-    return hasYarn(directory) ? "yarn" : hasPNPM(directory) ? "pnpm" : hasBun(directory) ? "bun" : "npm";
-  }
-
   async execSizeLimit(
-    skipInstall: boolean,
-    skipBuild: boolean,
     branch?: string,
     buildScript?: string,
-    cleanScript?: string,
-    windowsVerbatimArguments?: boolean,
-    directory?: string,
     script?: string,
-    packageManager?: string
+    directory?: string,
   ): Promise<{ status: number; output: string }> {
-    const manager = packageManager || this.getPackageManager(directory);
     let output = "";
 
     if (branch) {
@@ -46,21 +23,11 @@ class Term {
       await exec(`git checkout -f ${branch}`);
     }
 
-    if (!skipInstall) {
-      await exec(`${manager} install`, [], {
-        cwd: directory
-      });
-    }
-
-    if (!skipBuild) {
-      const script = buildScript || "build";
-      await exec(`${manager} run ${script}`, [], {
-        cwd: directory
-      });
+    if (buildScript) {
+      await exec(buildScript);
     }
 
     const status = await exec(script, [], {
-      windowsVerbatimArguments,
       ignoreReturnCode: true,
       listeners: {
         stdout: (data: Buffer) => {
@@ -69,12 +36,6 @@ class Term {
       },
       cwd: directory
     });
-
-    if (cleanScript) {
-      await exec(`${manager} run ${cleanScript}`, [], {
-        cwd: directory
-      });
-    }
 
     return {
       status,

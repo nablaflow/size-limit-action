@@ -11,29 +11,13 @@ inputs:
   build_script:
     required: false
     description: 'a custom npm script to build'
-  clean_script:
-    required: false
-    description: 'a npm script to clean up build directory'
-  skip_build:
-    required: false
-    description: ''
-  skip_install:
-    required: false
-    description: ''
-  directory:
-    required: false
-    description: "a custom subdirectory"
-  windows_verbatim_arguments:
-    required: false
-    description: "exec `size-limit` with the option `windowsVerbatimArguments`"
-    default: true
   script:
     required: false
     default: "npx size-limit --json"
     description: "The script used to generate size-limit results"
-  package_manager:
+  directory:
     required: false
-    description: "The package manager used to run the build and install commands. If not provided, the manager will be auto detected. Example values: `yarn`, `npm`, `pnpm`, `bun`."
+    description: "a custom subdirectory"
 runs:
   using: 'node20'
   main: 'dist/index.js'
