@@ -10,9 +10,6 @@ function hasBun(cwd = process.cwd()) {
 	return fs.existsSync(path.resolve(cwd, 'bun.lockb'));
 }
 
-const INSTALL_STEP = "install";
-const BUILD_STEP = "build";
-
 class Term {
   /**
    * Autodetects and gets the current package manager for the current directory, either yarn, pnpm, bun,
@@ -26,8 +23,9 @@ class Term {
   }
 
   async execSizeLimit(
+    skipInstall: boolean,
+    skipBuild: boolean,
     branch?: string,
-    skipStep?: string,
     buildScript?: string,
     cleanScript?: string,
     windowsVerbatimArguments?: boolean,
@@ -48,13 +46,13 @@ class Term {
       await exec(`git checkout -f ${branch}`);
     }
 
-    if (skipStep !== INSTALL_STEP && skipStep !== BUILD_STEP) {
+    if (!skipInstall) {
       await exec(`${manager} install`, [], {
         cwd: directory
       });
     }
 
-    if (skipStep !== BUILD_STEP) {
+    if (!skipBuild) {
       const script = buildScript || "build";
       await exec(`${manager} run ${script}`, [], {
         cwd: directory

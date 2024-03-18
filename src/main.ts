@@ -40,7 +40,8 @@ async function run() {
     }
 
     const token = getInput("github_token");
-    const skipStep = getInput("skip_step");
+    const skipInstall = getInput("skip_install") === "true" ? true : false;
+    const skipBuild = getInput("skip_build") === "true" ? true : false;
     const buildScript = getInput("build_script");
     const cleanScript = getInput("clean_script");
     const script = getInput("script");
@@ -53,8 +54,9 @@ async function run() {
     const limit = new SizeLimit();
 
     const { status, output } = await term.execSizeLimit(
+      skipInstall,
+      skipBuild,
       null,
-      skipStep,
       buildScript,
       cleanScript,
       windowsVerbatimArguments,
@@ -63,8 +65,9 @@ async function run() {
       packageManager
     );
     const { output: baseOutput } = await term.execSizeLimit(
+      skipInstall,
+      skipBuild,
       pr.base.ref,
-      null,
       buildScript,
       cleanScript,
       windowsVerbatimArguments,
